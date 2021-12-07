@@ -1,13 +1,14 @@
 ﻿#include <iostream>
 #include "framework.h"
 #include "web-browser.h"
+#include <shobjidl.h>
 
 #define MAX_LOADSTRING 100
 
 // Глобальные переменные:
 HINSTANCE hInst;                                // текущий экземпляр
-WCHAR szTitle[MAX_LOADSTRING] =  _T("DesktopApp");                  // Текст строки заголовка
-WCHAR szWindowClass[MAX_LOADSTRING] = _T("Windows Desktop Guided Tour Application");            // имя класса главного окна
+WCHAR szTitle[MAX_LOADSTRING] =  L"DesktopApp";                  // Текст строки заголовка
+WCHAR szWindowClass[MAX_LOADSTRING] = L"Windows Desktop Guided Tour Application";            // имя класса главного окна
 
 // Отправить объявления функций, включенных в этот модуль кода:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -24,8 +25,45 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     // TODO: Разместите код здесь.
-    std::cout << szTitle << std::endl;
-    std::cout << szWindowClass << std::endl;
+
+    HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_MULTITHREADED);
+
+    if (SUCCEEDED(hr))
+    {
+        IFileOpenDialog* pFileOpen;
+        hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL,
+            IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
+
+        if (SUCCEEDED(hr))
+        {
+            hr = pFileOpen->Show(NULL);
+
+            if (SUCCEEDED(hr))
+            {
+                IShellItem* pItem;
+                hr = pFileOpen->GetResult(&pItem);
+
+                if (SUCCEEDED(hr))
+                {
+                    PWSTR pszFilePath;
+                    hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+
+                    if (SUCCEEDED(hr))
+                    {
+                        MessageBoxW(NULL, pszFilePath, L"File Path", MB_OK);
+                        CoTaskMemFree(pszFilePath);
+                    }
+
+                    pItem->Release();
+                }
+            }
+
+            pFileOpen->Release();
+        }
+
+        CoUninitialize();
+    }
+
     // Инициализация глобальных строк
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_WEBBROWSER, szWindowClass, MAX_LOADSTRING);
@@ -80,15 +118,10 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
     //return RegisterClassExW(&wcex);
-    if (!RegisterClassEx(&wcex))
-    {
-        MessageBox(NULL,
-            _T("Call to RegisterClassEx failed!"),
-            _T("Windows Desktop Guided Tour"),
-            NULL);
-
+   if (!RegisterClassEx(&wcex))
+   {
         return 1;
-    }
+   }
 }
 
 //
@@ -110,11 +143,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    if (!hWnd)
    {
-       MessageBox(NULL,
-           _T("Call to CreateWindowEx failed!"),
-           _T("Windows Desktop Guided Tour"),
-           NULL);
-
        return 1;
    }
 
