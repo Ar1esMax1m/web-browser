@@ -26,44 +26,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // TODO: Разместите код здесь.
 
-    HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_MULTITHREADED);
-
-    if (SUCCEEDED(hr))
-    {
-        IFileOpenDialog* pFileOpen;
-        hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL,
-            IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
-
-        if (SUCCEEDED(hr))
-        {
-            hr = pFileOpen->Show(NULL);
-
-            if (SUCCEEDED(hr))
-            {
-                IShellItem* pItem;
-                hr = pFileOpen->GetResult(&pItem);
-
-                if (SUCCEEDED(hr))
-                {
-                    PWSTR pszFilePath;
-                    hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
-
-                    if (SUCCEEDED(hr))
-                    {
-                        MessageBoxW(NULL, pszFilePath, L"File Path", MB_OK);
-                        CoTaskMemFree(pszFilePath);
-                    }
-
-                    pItem->Release();
-                }
-            }
-
-            pFileOpen->Release();
-        }
-
-        CoUninitialize();
-    }
-
     // Инициализация глобальных строк
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_WEBBROWSER, szWindowClass, MAX_LOADSTRING);
@@ -146,9 +108,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
        return 1;
    }
 
+   HWND hWndEdit = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT("test"), WS_CHILD | WS_VISIBLE | WS_BORDER, 100, 20, 140, 20, hWnd, NULL, hInst, NULL);
+
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
-
+ 
    return TRUE;
 }
 
@@ -164,8 +128,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    TCHAR greeting[] = _T("Hello, Windows desktop!");
-
     switch (message)
     {
     case WM_COMMAND:
@@ -190,9 +152,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
             // TODO: Добавьте сюда любой код прорисовки, использующий HDC...
-            TextOut(hdc,
-                5, 5,
-                greeting, _tcslen(greeting));
+            FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
             EndPaint(hWnd, &ps);
         }
         break;
